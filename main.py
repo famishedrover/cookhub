@@ -80,8 +80,18 @@ def dropsession():
 @app.route('/protected')
 def protected():
 	if g.user:
-		return 'Logged In!'
+		return render_template("after_login/index.html")
 	return redirect(url_for('home'))
+
+
+
+@app.route('/protected-recipe-add')
+def recipe_page():
+	return render_template("after_login/AddRecipe.html")
+
+@app.route('/protected-stage-add')
+def stages_page():
+	return render_template("after_login/CommitIndex.html")
 
 @app.before_request
 def before_request():
@@ -89,7 +99,19 @@ def before_request():
 	if 'user' in session :
 		g.user = session['user']
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html' , errortext='Dish Not Found',errornumber='404'), 404
 
+
+@app.after_request
+def add_header(response):   
+	response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+	response.headers['Pragma'] = 'no-cache'
+	response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
+	if ('Cache-Control' not in response.headers):
+		response.headers['Cache-Control'] = 'public, max-age=600'
+	return response
 
 
 
