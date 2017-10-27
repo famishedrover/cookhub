@@ -26,6 +26,7 @@ class Person(db.Model):
 	age = db.Column(db.Integer,nullable=False)
 	gender = db.Column(db.String(1),nullable=False)
 	expertise = db.Column(db.String(15),nullable=False)
+	image = db.Column(db.String(300))
 	mycooks = db.relationship('Cooks', backref='person', lazy=True)
 
 
@@ -38,6 +39,7 @@ class Cooks(db.Model):
 	cost = db.Column(db.Integer,nullable=False)
 	region = db.Column(db.String(30),nullable=False)
 	public = db.Column(db.String(1),nullable=False)
+	image = db.Column(db.String(300))
 	stages = db.relationship('Stages',backref='cook',lazy=True)
 	personid = db.Column(db.Integer,db.ForeignKey('person.id'),nullable=False)
 

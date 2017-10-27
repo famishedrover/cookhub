@@ -2,9 +2,21 @@ from dbrun import *
 from flask import render_template , url_for , redirect , request, session , abort , flash , g
 from sqlalchemy import exc
 # g in flask exists globally
+from functools import wraps
+
 
 app.secret_key = os.urandom(24)
 db.create_all()
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None:
+        	flash('Login Required!')
+        	return redirect(url_for('home'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 def check_auth(givenemail, password): 
@@ -21,16 +33,15 @@ def check_auth(givenemail, password):
 def home():
 	if g.user :
 		return redirect(url_for('protected'))
+	return render_template('home.html')
 
-	return render_template('home.html',)
-
-@app.route('/userhome')
-def userhome():
-	return 'UserHome'
+# @app.route('/userhome')
+# def userhome():
+# 	return 'UserHome'
 
 @app.route('/signup' , methods=['POST'])
 def handle_signup():
-	email = request.form['email']
+	email = (request.form['email'])
 	password = request.form['password']
 	name = request.form['name']
 	location = request.form['location']
@@ -51,9 +62,11 @@ def handle_signup():
 		db.session.add(newperson)
 		db.session.commit()
 	except exc.SQLAlchemyError :
-		return 'Error in Database Commit.'
+		flash('Database Faliure. Apologies.')
+		return redirect(url_for('home'))
 
-	return 'Signup Complete.'
+	flash ('Signup Complete '+name.split(' ')[0]+'. You may now Kitch In')
+	return redirect(url_for('home'))
 
 
 @app.route('/authlogin', methods=["GET","POST"])
@@ -68,28 +81,41 @@ def handle_login():
 		return redirect(url_for('protected'))
 		# return 'Logged In !'
 	else :
-		return error 
+		flash('Invalid Email/Password')
+		return redirect(url_for('home'))
 
 
 @app.route('/dropsession')
+@login_required
 def dropsession():
 	session.pop('user',None)
+	flash('Logged Out!')
+	return redirect(url_for('home'))
+
+@app.route('/success/<id>')
+@login_required
+def user_page(id):
+	if g.user != int(id) :
+		return redirect(url_for('user_page',id=g.user))
+
+	return render_template("after_login/index.html")
+	flash('No Session Running!')
 	return redirect(url_for('home'))
 
 
 @app.route('/protected')
+@login_required
 def protected():
-	if g.user:
-		return render_template("after_login/index.html")
-	return redirect(url_for('home'))
-
+	return  redirect(url_for('user_page',id=g.user)) 
 
 
 @app.route('/protected-recipe-add')
+@login_required
 def recipe_page():
 	return render_template("after_login/AddRecipe.html")
 
 @app.route('/protected-stage-add')
+@login_required
 def stages_page():
 	return render_template("after_login/CommitIndex.html")
 
@@ -176,4 +202,4 @@ def add_header(response):
 
 
 if __name__ == '__main__':
-	app.run(debug = True)
+	app.run(debug=True)

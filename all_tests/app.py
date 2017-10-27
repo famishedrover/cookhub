@@ -1,19 +1,20 @@
 from dbrun import *
-from flask import render_template,redirect,flash,,url_for, request, Response, jsonify
+from flask import render_template,redirect,flash,url_for, request, Response, jsonify , g
 import json
 import os
+from time import time
 from werkzeug.utils import secure_filename
 
 db.create_all()
 
 
-UPLOAD_FOLDER = './Uploaded'
+UPLOAD_FOLDER = './static/Uploaded'
 ALLOWED_EXTENSIONS = set(['jpg','png','jpeg'])
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
+pid = 1
 
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
@@ -21,7 +22,9 @@ def allowed_file(filename):
 @app.route('/', methods=['POST','GET'])
 def upload_file():
 	if request.method == 'POST':
+		print request.form.keys()
 		print 'Text Entered:',str(request.form['tf'])
+		print 'Option Selected:',str(request.form['ch'])
 
 		if 'file' not in request.files :
 			flash('No file part')
@@ -32,12 +35,15 @@ def upload_file():
 			return redirect(request.url)
 
 		if file and allowed_file(file.filename):
-			filename = secure_filename(file.filename)
+			originalname = secure_filename(file.filename)
+			originalname = originalname.split('.')[-1]
+			filename = str(pid) +'_'+(str(time())).replace('.','_') + '.' + originalname
 			filepath = os.path.join(app.config['UPLOAD_FOLDER'],filename)
 			print 'Saved@',filepath
 			name = str(request.form['tf'])
 			image = str(filepath)
-			c = Cooks(name=name,image=image)
+			public = str(request.form['ch'])
+			c = Cooks(name=name,image=image,public=public)
 
 			try:
 				file.save(filepath)
@@ -46,10 +52,21 @@ def upload_file():
 			except:
 				print 'error db-commit / img-save.'
 				return 'Error'
-
 			return 'Done'
 
 	return render_template('Upload.html')
+
+
+@app.route('/img')
+def show_img():
+	pid=1
+	user = Cooks.query.filter_by(id=pid).first()
+	print user.image
+	return render_template('Uploaded.html',user=user)
+
+
+
+
 
 # @app.route('/uploads/<filename>')
 # def uploaded_file(filename):
