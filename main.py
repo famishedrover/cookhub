@@ -112,6 +112,33 @@ def user_page(id):
 	return redirect(url_for('home'))
 
 
+
+@app.route('/profile/<id>')
+@login_required
+def profile_page(id):
+	print type(id)," -> ", id
+	try:
+		id=int(id)
+	except:
+		pass
+	user = Person.query.filter_by(id=id).first()
+	print 'user id is ',type(id),id
+	cooks=Cooks.query.filter_by(personid=id).all()
+	# cooks_data_time=Cooks.query.filter_by(personid=id).order_by(Cooks.time.desc())
+	# print cooks_data_time
+	print cooks
+	cooks_manip=[]
+
+	for i in xrange(len(cooks)):
+		if i%2==0:
+			cooks_manip.append(list())
+		cooks_manip[int(i/2)].append(cooks[i])
+	#lets create data set here of history
+
+	print "and Cooks is ",cooks_manip
+	return render_template("after_login/profile.html",user=user,cooks=cooks_manip)
+
+
 @app.route('/protected')
 @login_required
 def protected():
