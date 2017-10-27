@@ -1,0 +1,26 @@
+{% extends "after_login/layout.html" %}
+{% block body %}
+<div class="list-group" style="padding:90px">
+
+{% if l == 0 %}
+  <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">No New Notifications</h5>
+    </div>
+    <small class="text-muted" style="align:center;">Check Again Later!</small>
+  </a>
+{% endif %}
+
+{% for n in notif %}
+  <a href="#" class="list-group-item list-group-item-action flex-column align-items-start">
+    <div class="d-flex w-100 justify-content-between">
+      <h5 class="mb-1">{{ n.ntype }}</h5>
+      <small class="text-muted">{{ n.timestamp }}</small>
+    </div>
+    <p class="mb-1">Dish is {{ n.cookname }} </p>
+    <small class="text-muted">By {{ n.sendername }} </small>
+  </a>
+{% endfor %}
+
+</div>
+{% endblock %}

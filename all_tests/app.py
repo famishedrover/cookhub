@@ -16,6 +16,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 pid = 1
 
+
+@app.route('/apti')
+def apti():
+	return 'Apti'
+
+
 def allowed_file(filename):
 	return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 

@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
+import datetime 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////'+os.getcwd()+'/testdata.db'
@@ -40,6 +41,8 @@ class Cooks(db.Model):
 	region = db.Column(db.String(30),nullable=False)
 	public = db.Column(db.String(1),nullable=False)
 	image = db.Column(db.String(300))
+	description = db.Column(db.String(200) , default='None Provided.')
+	star = db.Column(db.Integer, default=0)
 	stages = db.relationship('Stages',backref='cook',lazy=True)
 	personid = db.Column(db.Integer,db.ForeignKey('person.id'),nullable=False)
 
@@ -51,5 +54,15 @@ class Stages(db.Model):
 	ingredient = db.Column(db.String(80),nullable=False)
 	time = db.Column(db.Integer)
 	cookid = db.Column(db.Integer , db.ForeignKey('cooks.id'),nullable=False)
+
+
+
+class Notification(db.Model):
+	id = db.Column(db.Integer, primary_key=True , autoincrement = True)
+	ntype = db.Column(db.String(20) , nullable = False)
+	cookid = db.Column(db.Integer , db.ForeignKey('cooks.id'), nullable=False)
+	timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+	sender = db.Column(db.Integer , db.ForeignKey('person.id'), nullable = False)
+	
 
 

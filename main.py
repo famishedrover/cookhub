@@ -1,13 +1,22 @@
 from dbrun import *
-from flask import render_template , url_for , redirect , request, session , abort , flash , g
+from flask import render_template , url_for , redirect , request, session , abort , flash , g , jsonify
 from sqlalchemy import exc
+import json
 # g in flask exists globally
 from functools import wraps
-
+from werkzeug.utils import secure_filename
+from time import time
 
 app.secret_key = os.urandom(24)
 db.create_all()
 
+
+UPLOAD_FOLDER = './static/Uploaded'
+ALLOWED_EXTENSIONS = set(['jpg','png','jpeg'])
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
 def login_required(f):
     @wraps(f)
@@ -109,15 +118,97 @@ def protected():
 	return  redirect(url_for('user_page',id=g.user)) 
 
 
+
+class Notify():
+	def __init__(self,ntype,timestamp,senderid,cookid,cookname,sendername):
+		self.type = ntype
+		self.timestamp = timestamp
+		self.cookid = cookid
+		self.senderid = senderid
+		self.cookname = cookname
+		self.sendername = sendername
+
+@app.route('/notification')
+@login_required
+def notification():
+	i = g.user 
+
+	txt = 'select * from notification where cookid in (select id from cooks where personid = '+str(i)+') order by timestamp desc'
+	mynotifs = db.engine.execute(txt)
+	notif = []
+	for n in mynotifs :
+		print n.ntype , n.timestamp , n.sender , n.cookid,
+		cook = Cooks.query.filter_by(id=n.cookid).first()
+		print cook.name,
+		send_er = Person.query.filter_by(id=n.sender).first()
+		print send_er.name
+		nntype = n.ntype
+		ntimestamp = n.timestamp
+		nsendername = send_er.name
+		nsenderid = n.sender
+		ncook = cook.name
+		n = Notify(nntype,ntimestamp,nsenderid,n.cookid,ncook,nsendername)
+		notif.append(n)
+
+	return render_template('after_login/notification.html',notif = notif , l = len(notif))
+
+
 @app.route('/protected-recipe-add')
 @login_required
 def recipe_page():
 	return render_template("after_login/AddRecipe.html")
 
-@app.route('/protected-stage-add')
+
+
+
+
+@app.route('/protected-stage-add' , methods=['GET','POST'])
 @login_required
 def stages_page():
+	if request.method == 'POST' :
+		# ['cost', 'description', 'preptime', 'region', 'public', 'ctype', 'name']
+		name = request.form['name']
+		ctype = request.form['ctype']
+		public = request.form['public']
+		region = request.form['region']
+		description = request.form['description']
+		cost = int(request.form['cost'])
+		preptime = int(request.form['preptime'])
+		image = '/static/Uploaded/default.jpg'
+		personid = g.user
+		imdef = True
+		if 'file' not in request.files :
+			print 'Image File not of Correct extention'
+
+		file = request.files['file']
+		if file.filename == '':
+			pass
+
+		elif file and allowed_file(file.filename):
+			originalname = secure_filename(file.filename)
+			originalname = originalname.split('.')[-1]
+			filename = str(personid) +'_'+(str(time())).replace('.','_') + '.' + originalname
+			filepath = os.path.join(app.config['UPLOAD_FOLDER'],filename)
+			image = str(filepath)[1:]
+			imdef = False
+
+		c = Cooks(name=name,preptime=preptime,ctype=ctype,cost=cost,region=region,public=public,personid=personid,image=image,description=description)
+		
+		try:
+			if imdef is False :
+				file.save(filepath)
+				print 'Saved@',filepath
+			db.session.add(c)
+			db.session.commit()	
+		except:
+			print 'error db-commit / img-save.'
+			return render_template('404.html' , errortext='DB ERROR',errornumber='db400'), 400
+
 	return render_template("after_login/CommitIndex.html")
+
+
+
+
 
 @app.before_request
 def before_request():
@@ -147,59 +238,196 @@ def add_header(response):
 
 # @api.route('/')
 
+# 192.168.43.210:5000/api-signup
+#					 /apiauthlogin
 
 
-# @app.route('/api-signup' , methods=['POST'])
-# def api_handle_signup():
-# 	email = request.form['email']
-# 	password = request.form['password']
-# 	name = request.form['name']
-# 	location = request.form['location']
-# 	gender = request.form['gender']
-# 	age = request.form['age']
-# 	recruitment = request.form['recruitment']
-# 	expertise = request.form['expertise']
-
-# 	newperson = Person(email=email,
-# 						password=password,
-# 						name=name,
-# 						location=location,
-# 						recruitment=recruitment,
-# 						age=age,
-# 						gender=gender,
-# 						expertise=expertise)
-# 	try:
-# 		db.session.add(newperson)
-# 		db.session.commit()
-# 	except exc.SQLAlchemyError :
-# 		return 'Error in Database Commit.'
-
-# 	return 'Signup Complete.'
+def request_dict(request):
+	r = request.values.to_dict().keys()[0]
+	answer = request.values.to_dict()[r]
+	r = json.loads(answer)
+	print 'Data',r
+	return r
 
 
-# @app.route('/apiauthlogin', methods=["GET","POST"])
-# def api_handle_login():
-# 	session.pop('user',None)
-# 	givenemail = str(request.form['emaillogin'])
-# 	password = str(request.form['passwordlogin'])
-# 	e,p,i= check_auth(givenemail,password)
-# 	error = 'email' + str(e) + 'and password' + str(p) 
-# 	if e is True and p is True :
-# 		session['user'] = i
-# 		return redirect(url_for('protected'))
-# 		# return 'Logged In !'
-# 	else :
-# 		return error 
+@app.route('/archit')
+def archit():
+	return 'Archit.'
+
+@app.route('/api-signup' , methods=['POST'])
+def api_handle_signup():
+	r = request_dict(request)
+	print 'SIGNUP'
+	email = r['email']
+	password = r['password']
+	name = r['name']
+	location = r['location']
+	gender = r['gender']
+	age = r['age']
+	recruitment = r['recruitment']
+	expertise = r['expertise']
+	data = {'status':'1'}
+
+	newperson = Person(email=email,
+						password=password,
+						name=name,
+						location=location,
+						recruitment=recruitment,
+						age=age,
+						gender=gender,
+						expertise=expertise)
+	try:
+		db.session.add(newperson)
+		db.session.commit()
+	except exc.SQLAlchemyError :
+		data['status'] = '0'
+		resp = jsonify(data)
+		resp.status_code = 400
+		return resp
+
+	resp = jsonify(data)
+	resp.status_code = 200
+	return resp
+
+
+@app.route('/apiauthlogin', methods=["POST"])
+def api_handle_login():
+	print 'LOGIN'
+	r = request_dict(request)
+	givenemail = str(r['emaillogin'])
+	password = str(r['passwordlogin'])
+	data = {
+		'id':'-1',
+		'status':'0',
+		'error':''
+	}
+
+	e,p,i= check_auth(givenemail,password)
+	error = 'email' + str(e) + 'and password' + str(p) 
+	data['error'] = error
+
+	if e is True and p is True :
+		data['id'] = i
+		data['status'] = 1
+		resp = jsonify(data)
+		resp.status_code = 200
+		return resp
+	resp = jsonify(data)
+	resp.status_code = 400
+	return resp
 
 
 
 
 
+@app.route('/api-notification',methods=["POST"])
+def api_notification():
+
+	r = request_dict(request)
+	print 'VAlues',request.values
+	print 'json' , request.json
+	print 'data' , request.data
+	i = int(r['id'])
+	
+	a = []
+	final = {'notifications':[]}
+	txt = 'select * from notification where cookid in (select id from cooks where personid = '+str(i)+') order by timestamp desc'
+	mynotifs = db.engine.execute(txt)
+
+	for n in mynotifs :
+		print n.ntype , n.timestamp , n.sender , n.cookid,
+		cook = Cooks.query.filter_by(id=n.cookid).first()
+		print cook.name,
+		send_er = Person.query.filter_by(id=n.sender).first()
+		print send_er.name
+		nntype = n.ntype
+		ntimestamp = n.timestamp
+		nsendername = send_er.name
+		nsenderid = n.sender
+		ncook = cook.name
+# Pulled ncook by sendername on timestamp
+		current = {'type':nntype,
+					'timestamp':ntimestamp,
+					'cook':ncook,
+					'sendername':nsendername,
+					'senderid':nsenderid}
+
+		a.append(current)
+	final['notifications']=a
+	resp = jsonify(final)
+	resp.status_code = 200
+	return resp
 
 
+@app.route('/api-trending' , methods = ['GET'])
+def api_trending():
+	# image , name , description , cookid 
+	image = 'http://192.168.43.210:5000'+url_for('static',filename='Uploaded/default.jpg')
+	name = 'Recipe'
+	description = 'dsaljf'
+	cookid = 0
+	print image,name,description,cookid
+
+	a = []
+	final = {'trending':[]}
+	# for i in range(4):
+	current = {'image':image,
+				'name':name,
+				'description':description,
+				'cookid':cookid}
+	a.append(current)
+	cookid = 1
+	current = {'image':image,
+				'name':name,
+				'description':description,
+				'cookid':cookid}
+	a.append(current)
+
+	final['trending'] = a
+
+	resp = jsonify(final)
+	resp.status_code = 200
+	return resp
 
 
+@app.route('/api-cook-each' , methods=['POST'])
+def api_cook_each():
+	r = request_dict(request)
+	i = int(r['id'])
+	final = {	'status':'0',
+				'name':'',
+				'preptime':'',
+				'ctype':'',
+				'cost':'',
+				'region':'',
+				'public':'',
+				'image':'',
+				'description':'',
+				'star':'',
+				'personid':''}
+
+	c = Cooks.query.filter_by(id=i).first()
+	if c is None :
+		resp = jsonify(final)
+		resp.status_code = 400
+		return resp
+
+	final = {	'status':'1',
+				'name':c.name,
+				'preptime':c.preptime,
+				'ctype':c.ctype,
+				'cost':c.cost,
+				'region':c.region,
+				'public':c.public,
+				'image':'http://192.168.43.210:5000'+str(c.image),
+				'description':c.description,
+				'star':c.star,
+				'personid':c.personid}
+
+	resp = jsonify(final)
+	resp.status_code = 200
+	return resp
 
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(host="0.0.0.0",debug=True)

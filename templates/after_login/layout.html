@@ -41,47 +41,10 @@
     <div class="navbar-nav">
       <a class="nav-item nav-link active" style="color: rgba(255,255,255,0.75)" href="{{ url_for('protected') }}">Trending <span class="sr-only">(current)</span></a>
       
-      <div class="container" style="padding:0px">
-        <div class="row">
-        <nav class="navbar navbar-default">
-        <div class="container-fluid">
-          
-            <ul class="nav navbar-nav navbar-right">
-              <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="color:#cccecf;text-decoration:None;">Notification (<b>0</b>)</a>
-                <ul class="dropdown-menu notify-drop">
-                  <div class="notify-drop-title">
-                    <div class="row">
-                      <div class="col-md-6 col-sm-6 col-xs-6">Unread (<b>2</b>)</div>
-                      <div class="col-md-6 col-sm-6 col-xs-6 text-right"><a href="" class="rIcon allRead" data-tooltip="tooltip" data-placement="bottom" title="tümü okundu."><i class="fa fa-dot-circle-o"></i></a></div>
-                    </div>
-                  </div>
-                  <!-- end notify title -->
-                  <!-- notify content -->
-
-                  <div class="drop-content">
-                    <li>
-                      <div class="col-md-3 col-sm-3 col-xs-3"><div class="notify-img"><img src="http://placehold.it/45x45" alt=""></div></div>
-                      <div class="col-md-9 col-sm-9 col-xs-9 pd-l0"><a href="">Star</a>marked you star <a href="">here</a> <a href="" class="rIcon"><i class="fa fa-dot-circle-o"></i></a>
-                      
-                      <hr>
-                      <p class="time">2 days</p>
-                      </div>
-                    </li>
 
 
-                  </div>
-                </ul>
-              </li>
-            </ul>
-        </div><!-- /.container-fluid -->
-      </nav>
-        </div>
-      </div>
-
-
-      <a class="nav-item nav-link" style="color: rgba(255,255,255,0.75)" href="#">MyCooks</a>
       <a class="nav-item nav-link" style="color: rgba(255,255,255,0.75)" href="#">Profile</a>
+      <a class="nav-item nav-link" style="color: rgba(255,255,255,0.75)" href="{{ url_for('notification') }}">Notification</a>
  
 
       <a class="nav-item nav-link disabled" style="color: rgba(255,255,255,0.75)" href="{{ url_for('dropsession') }}">Logout</a>
