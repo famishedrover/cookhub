@@ -186,7 +186,18 @@ def recipe_page():
 	return render_template("after_login/AddRecipe.html")
 
 
+@app.route('/recipe/<id>')
+@login_required
+def recipe(id):
+	cook = Cooks.query.filter_by(id=id).first()
+	person = Person.query.filter_by(id=cook.personid).first()
+	return render_template('after_login/recipe.html', cook = cook , person = person)
 
+
+# @app.route('/trending')
+# @login_required
+# def trending():
+# 	trends = Cooks.query.order_by(Cooks.star.desc()).limit(6)
 
 
 @app.route('/protected-stage-add' , methods=['GET','POST'])
@@ -395,20 +406,17 @@ def api_trending():
 	cookid = 0
 	print image,name,description,cookid
 
+	trends = Cooks.query.order_by(Cooks.star.desc()).limit(6)
 	a = []
 	final = {'trending':[]}
-	# for i in range(4):
-	current = {'image':image,
-				'name':name,
-				'description':description,
-				'cookid':cookid}
-	a.append(current)
-	cookid = 1
-	current = {'image':image,
-				'name':name,
-				'description':description,
-				'cookid':cookid}
-	a.append(current)
+
+	for t in trends :
+		# print 'IMAGE:',t.image
+		current = {'image':"http://192.168.43.210:5000"+str(t.image),
+					'name':t.name,
+					'description':t.description,
+					'cookid':t.id}
+		a.append(current)
 
 	final['trending'] = a
 
@@ -454,6 +462,48 @@ def api_cook_each():
 	resp = jsonify(final)
 	resp.status_code = 200
 	return resp
+
+
+@app.route('/api-profile-each' , methods=['POST'])
+def api_profile_page():
+	r = request_dict(request)
+	i = int(r['id']) 
+
+
+
+	print 'USER ID',i
+	cooks=Cooks.query.filter_by(personid=i).all()
+
+	a = []
+	final = {'cooks':[]}
+	if cooks is None :
+		print 'CURRENT:',None
+		current = {	'status':'0',
+					'name':'',
+					'image':'',
+					'description':'',
+					'cookid':''}
+		a.append(current)
+		final['cooks']= a
+		resp = jsonify(final)
+		resp.status_code = 400
+		return resp
+
+	for cook in cooks :
+		current = {	'status':'1',
+					'name':cook.name,
+					'image':"http://192.168.43.210:5000"+str(cook.image),
+					'description':cook.description,
+					'cookid':cook.id}
+
+		print 'CURRENT:',current
+		a.append(current)
+
+	final['cooks']= a
+	resp = jsonify(final)
+	resp.status_code = 200
+	return resp
+
 
 
 if __name__ == '__main__':

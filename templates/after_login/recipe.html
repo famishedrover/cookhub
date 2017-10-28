@@ -1,0 +1,49 @@
+{% extends "after_login/layout.html" %}
+{% block body %}
+<div class="container">
+
+      <!-- Portfolio Item Heading -->
+      <h1 class="my-4" style="text-color:#343a40;">{{ cook.name }}
+        <a href="{{ url_for('profile_page', id=person.id) }}"><small style="font-size:18px;background:#81f286;">{{ person.name }}</small></a>
+	<img src="{{ url_for('static',filename='star.svg') }}" style="height:20px;" >
+	<small style="font-size:18px;">{{ cook.star }}</small>
+      </h1>
+		
+      <div class="row">
+
+        <div class="col-md-8">
+          <img class="img-fluid" src="{{ cook.image }}" alt="" style="height:500px;">
+			
+        </div>
+		
+        <div class="col-md-4">
+          <h3 class="my-3">Recipe Description</h3>
+          <p>{{ cook.description }}</p>
+          <h3 class="my-3">Recipe Details</h3>
+          <ul class="list-group">
+            <li class="list-group-item">Preparation Time : {{ cook.preptime }}</li>
+            <li class="list-group-item">Cost : {{ cook.cost }}</li>
+            <li class="list-group-item">Type : {{ cook.ctype }}</li>
+            <li class="list-group-item">Region : {{ cook.region }}</li>
+
+          </ul>
+
+        </div>
+
+      </div>
+  
+
+
+
+    </div>
+ 
+    <!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+
+
+{% endblock %}

@@ -22,11 +22,20 @@ b = Cooks(name="Paneer",preptime=20,ctype="Indian",cost=200,region="Delhi",publi
 c = Stages(comment="Cook Well",ingredient="Masala",time=5,cookid=cid)
 c1 = Stages(comment="Cook End",ingredient="Paneer",time=5,cookid=cid)
 
-n1 = Notification(ntype='Pull1',sender=1,cookid=0)
-n2 = Notification(ntype='Push2',sender=1,cookid=0)
-n3 = Notification(ntype='Pull3',sender=1,cookid=1)
-n4 = Notification(ntype='Pull4',sender=1,cookid=1)
+# n1 = Notification(ntype='Pull',sender=1,cookid=5)
+# n2 = Notification(ntype='Push',sender=2,cookid=6)
+# n3 = Notification(ntype='Star',sender=3,cookid=11)
+# db.session.add(n1)
+# db.session.add(n2)
+# db.session.add(n3)
+# db.session.commit()
 
+
+
+
+n1 = Notification(ntype='Pull',sender=1,cookid=0)
+n2 = Notification(ntype='Push',sender=1,cookid=0)
+n3 = Notification(ntype='Star',sender=1,cookid=1)
 
 
 
@@ -38,7 +47,7 @@ db.session.add(c1)
 db.session.add(n1)
 db.session.add(n2)
 db.session.add(n3)
-db.session.add(n4)
+
 
 
 db.session.commit()

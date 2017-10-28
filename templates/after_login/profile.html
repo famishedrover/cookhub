@@ -338,7 +338,7 @@ chart.render();
 	    <p class="card-text"><b>Stars: <b> {{ iitems.star }}</p>
 	    <p class="card-text"><b>Type: <b> {{ iitems.ctype }}</p>
 	    <p class="card-text"><b>Region: <b> {{ iitems.region }}</p>
-	    <button type="button" class="btn-outline-info" style="border-radius:2px;">See More...</button>
+	    <a href="{{ url_for('recipe' , id=iitems.id) }}"><button type="button" class="btn-outline-info" style="border-radius:2px;">See More...</button></a>
   	</div>
 	</div>
 	</div>
